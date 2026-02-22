@@ -1,0 +1,16 @@
+package com.example.caporalescristos.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class ConfiguracionTiendaDto {
+
+    private Long id;
+    private String whatsappNumero;
+}
