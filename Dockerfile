@@ -1,20 +1,26 @@
+# Usamos una imagen que ya incluye herramientas de compilación
 FROM eclipse-temurin:17-jdk
 
 WORKDIR /app
 
-# Copiamos todo el contenido del repositorio al contenedor
-COPY . .
+# Copiamos solo los archivos de configuración primero para aprovechar la caché
+COPY mvnw .
+COPY .mvn .mvn
+COPY pom.xml .
 
-# Corregimos los permisos de fin de línea (por si subiste desde Windows) 
-# y damos permiso de ejecución
+# Limpieza total: convertimos finales de línea y damos permisos
+# Usamos comandos de shell directamente para evitar errores de formato
 RUN apt-get update && apt-get install -y dos2unix && \
     dos2unix mvnw && \
     chmod +x mvnw
 
-# Ejecutamos la compilación
+# Copiamos el resto del código
+COPY src src
+
+# Compilamos
 RUN ./mvnw clean package -DskipTests
 
 EXPOSE 8080
 
-# Comando para arrancar la aplicación usando el shell para expandir el asterisco
-CMD ["sh", "-c", "java -jar target/*.jar"]
+# Usamos una forma más segura de ejecutar el JAR
+ENTRYPOINT ["sh", "-c", "java -jar target/*.jar"]
