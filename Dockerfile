@@ -1,26 +1,18 @@
-# Usamos una imagen que ya incluye herramientas de compilación
-FROM eclipse-temurin:17-jdk
+FROM eclipse-temurin:17-jdk-alpine
 
 WORKDIR /app
 
-# Copiamos solo los archivos de configuración primero para aprovechar la caché
-COPY mvnw .
-COPY .mvn .mvn
-COPY pom.xml .
+# Copiamos todo
+COPY . .
 
-# Limpieza total: convertimos finales de línea y damos permisos
-# Usamos comandos de shell directamente para evitar errores de formato
-RUN apt-get update && apt-get install -y dos2unix && \
-    dos2unix mvnw && \
-    chmod +x mvnw
+# Eliminamos posibles problemas de formato de Windows (\r) y damos permisos
+RUN sed -i 's/\r$//' mvnw
+RUN chmod +x mvnw
 
-# Copiamos el resto del código
-COPY src src
-
-# Compilamos
+# Compilamos usando la memoria de forma eficiente
 RUN ./mvnw clean package -DskipTests
 
 EXPOSE 8080
 
-# Usamos una forma más segura de ejecutar el JAR
-ENTRYPOINT ["sh", "-c", "java -jar target/*.jar"]
+# Comando para correr el programa
+CMD ["sh", "-c", "java -jar target/*.jar"]
