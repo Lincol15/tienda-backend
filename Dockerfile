@@ -1,21 +1,22 @@
-# 1. Imagen base
+# Usamos una imagen de Java ligera
 FROM eclipse-temurin:17-jdk-alpine
 
+# Definimos el directorio de trabajo
 WORKDIR /app
 
-# 2. Copiamos TODO el proyecto
+# Copiamos todos los archivos del proyecto al contenedor
 COPY . .
 
-# 3. Arreglamos el archivo mvnw para que Linux lo entienda
-# (Elimina espacios de Windows y da permisos de ejecución)
-RUN sed -i 's/\r$//' mvnw
-RUN chmod +x mvnw
+# CORRECCIÓN VITAL: 
+# 1. Quitamos caracteres ocultos de Windows (\r)
+# 2. Damos permiso de ejecución al Maven Wrapper
+RUN sed -i 's/\r$//' mvnw && chmod +x mvnw
 
-# 4. COMPILAMOS (Esta es la línea que faltaba en tu último error)
+# COMPILACIÓN: Generamos el archivo .jar
 RUN ./mvnw clean package -DskipTests
 
-# 5. Puerto estándar
+# Exponemos el puerto que usa Spring Boot por defecto
 EXPOSE 8080
 
-# 6. Ejecutamos el archivo generado
+# ARRANCAR: Ejecutamos el archivo generado en la carpeta target
 CMD ["sh", "-c", "java -jar target/*.jar"]
