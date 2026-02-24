@@ -9,10 +9,8 @@ COPY mvnw .
 COPY mvnw.cmd .
 COPY pom.xml .
 
-# Arreglamos finales de línea y permisos del wrapper (evita errores en Linux)
-RUN apt-get update && apt-get install -y dos2unix && \
-    dos2unix mvnw 2>/dev/null || true && \
-    chmod +x mvnw
+# Arreglamos finales de línea (Windows -> Linux) sin instalar paquetes; sed viene en la imagen
+RUN sed -i 's/\r$//' mvnw && chmod +x mvnw
 
 # Copiamos el código fuente
 COPY src src

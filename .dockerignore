@@ -1,0 +1,13 @@
+target/
+.git
+.gitignore
+uploads/
+*.log
+.idea
+.vscode
+README.md
+*.md
+caporalesCristos/
+.env
+.env.local
+application-local.properties
