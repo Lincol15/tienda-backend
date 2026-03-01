@@ -24,8 +24,17 @@ public class Foto {
     @Column(columnDefinition = "TEXT")
     private String descripcion;
 
-    @Column(name = "url_imagen", nullable = false, length = 500)
+    /** Ruta en disco (/uploads/...) o null si la imagen está en imagenData (BD). */
+    @Column(name = "url_imagen", length = 500)
     private String urlImagen;
+
+    /** Imagen guardada en BD (Caporales Cristos – persiste en Render). */
+    @Lob
+    @Column(name = "imagen_data")
+    private byte[] imagenData;
+
+    @Column(name = "content_type_imagen", length = 100)
+    private String contentTypeImagen;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "seccion_id")
