@@ -13,7 +13,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -57,38 +56,19 @@ public class FotoService {
         return toDto(foto);
     }
 
-    /** Para servir imagen desde BD (Caporales Cristos). */
-    @Transactional(readOnly = true)
-    public Optional<Foto> getFotoParaImagen(Long id) {
-        return fotoRepository.findById(id)
-                .filter(f -> f.getImagenData() != null && f.getImagenData().length > 0);
-    }
-
     @Transactional
     public FotoDto crear(FotoRequest request, MultipartFile imagen) {
-        if (imagen == null || imagen.isEmpty()) {
+        String urlImagen = fileStorageService.storeFile(imagen, UPLOAD_SUBFOLDER);
+        if (urlImagen == null) {
             throw new IllegalArgumentException("Se requiere una imagen");
         }
         GaleriaSeccion seccion = request.getSeccionId() != null
                 ? galeriaSeccionRepository.findById(request.getSeccionId()).orElse(null)
                 : null;
-        byte[] imagenData;
-        String contentTypeImagen;
-        try {
-            imagenData = imagen.getBytes();
-            contentTypeImagen = imagen.getContentType();
-            if (contentTypeImagen == null || contentTypeImagen.isBlank()) {
-                contentTypeImagen = "image/jpeg";
-            }
-        } catch (java.io.IOException e) {
-            throw new RuntimeException("Error al leer la imagen", e);
-        }
         Foto foto = Foto.builder()
                 .titulo(request.getTitulo())
                 .descripcion(request.getDescripcion())
-                .urlImagen(null)
-                .imagenData(imagenData)
-                .contentTypeImagen(contentTypeImagen)
+                .urlImagen(urlImagen)
                 .seccion(seccion)
                 .activo(request.getActivo() != null ? request.getActivo() : true)
                 .build();
@@ -108,17 +88,8 @@ public class FotoService {
             foto.setSeccion(seccion);
         }
         if (imagenNueva != null && !imagenNueva.isEmpty()) {
-            if (foto.getUrlImagen() != null && foto.getUrlImagen().startsWith("/uploads/")) {
-                fileStorageService.deleteFile(foto.getUrlImagen());
-            }
-            try {
-                foto.setImagenData(imagenNueva.getBytes());
-                String ct = imagenNueva.getContentType();
-                foto.setContentTypeImagen(ct != null && !ct.isBlank() ? ct : "image/jpeg");
-                foto.setUrlImagen(null);
-            } catch (java.io.IOException e) {
-                throw new RuntimeException("Error al leer la imagen", e);
-            }
+            fileStorageService.deleteFile(foto.getUrlImagen());
+            foto.setUrlImagen(fileStorageService.storeFile(imagenNueva, UPLOAD_SUBFOLDER));
         }
         foto = fotoRepository.save(foto);
         return toDto(foto);
@@ -128,21 +99,16 @@ public class FotoService {
     public void eliminar(Long id) {
         Foto foto = fotoRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Foto", id));
-        if (foto.getUrlImagen() != null && foto.getUrlImagen().startsWith("/uploads/")) {
-            fileStorageService.deleteFile(foto.getUrlImagen());
-        }
+        fileStorageService.deleteFile(foto.getUrlImagen());
         fotoRepository.delete(foto);
     }
 
     private FotoDto toDto(Foto f) {
-        String urlImagen = f.getImagenData() != null
-                ? "/api/fotos/" + f.getId() + "/imagen"
-                : f.getUrlImagen();
         return FotoDto.builder()
                 .id(f.getId())
                 .titulo(f.getTitulo())
                 .descripcion(f.getDescripcion())
-                .urlImagen(urlImagen)
+                .urlImagen(f.getUrlImagen())
                 .activo(f.getActivo())
                 .fechaCreacion(f.getFechaCreacion())
                 .seccionId(f.getSeccion() != null ? f.getSeccion().getId() : null)
