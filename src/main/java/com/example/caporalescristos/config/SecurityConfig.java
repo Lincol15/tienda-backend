@@ -62,6 +62,7 @@ public class SecurityConfig {
             "/api/admin/ventas", "/api/admin/ventas/**"
     };
 
+    // CONFIGURACIÓN TEMPORAL PARA PRUEBAS EN RENDER – NO USAR EN PRODUCCIÓN FINAL
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -70,10 +71,7 @@ public class SecurityConfig {
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/admin/login").permitAll()
-                        .requestMatchers(PUBLIC_PATHS).permitAll()
-                        .requestMatchers(ADMIN_PATHS).hasRole("ADMIN")
-                        .anyRequest().authenticated()
+                        .anyRequest().permitAll()
                 )
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
