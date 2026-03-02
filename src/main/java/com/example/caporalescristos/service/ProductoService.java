@@ -19,11 +19,11 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ProductoService {
 
-    private static final String UPLOAD_SUBFOLDER = "productos";
+    private static final String CLOUDINARY_FOLDER = "c-origen/productos";
 
     private final ProductoRepository productoRepository;
     private final CategoriaRepository categoriaRepository;
-    private final FileStorageService fileStorageService;
+    private final CloudinaryService cloudinaryService;
 
     @Transactional(readOnly = true)
     public List<ProductoDto> listarPublicos() {
@@ -71,10 +71,7 @@ public class ProductoService {
         if (request.getPrecio() == null || request.getPrecio().compareTo(java.math.BigDecimal.ZERO) < 0) {
             throw new IllegalArgumentException("Precio es obligatorio y debe ser mayor o igual a 0");
         }
-        String urlImagen = null;
-        if (imagen != null && !imagen.isEmpty()) {
-            urlImagen = fileStorageService.storeFile(imagen, UPLOAD_SUBFOLDER);
-        }
+        String urlImagen = cloudinaryService.uploadImage(imagen, CLOUDINARY_FOLDER);
         Categoria categoria = null;
         if (request.getCategoriaId() != null) {
             categoria = categoriaRepository.findById(request.getCategoriaId())
@@ -107,10 +104,7 @@ public class ProductoService {
             producto.setCategoria(cat);
         }
         if (imagenNueva != null && !imagenNueva.isEmpty()) {
-            if (producto.getUrlImagen() != null) {
-                fileStorageService.deleteFile(producto.getUrlImagen());
-            }
-            producto.setUrlImagen(fileStorageService.storeFile(imagenNueva, UPLOAD_SUBFOLDER));
+            producto.setUrlImagen(cloudinaryService.uploadImage(imagenNueva, CLOUDINARY_FOLDER));
         }
         producto = productoRepository.save(producto);
         return toDto(producto);
@@ -120,9 +114,6 @@ public class ProductoService {
     public void eliminar(Long id) {
         Producto producto = productoRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Producto", id));
-        if (producto.getUrlImagen() != null) {
-            fileStorageService.deleteFile(producto.getUrlImagen());
-        }
         productoRepository.delete(producto);
     }
 

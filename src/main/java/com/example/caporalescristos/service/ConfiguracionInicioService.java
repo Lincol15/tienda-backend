@@ -14,14 +14,14 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ConfiguracionInicioService {
 
-    private static final String SUBFOLDER_PORTADA = "portada";
-    private static final String SUBFOLDER_LOGO = "logo";
+    private static final String CLOUDINARY_FOLDER_PORTADA = "caporales/portada";
+    private static final String CLOUDINARY_FOLDER_LOGO = "caporales/logo";
     private static final List<String> ALLOWED_IMAGE_TYPES = List.of(
             "image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"
     );
 
     private final ConfiguracionInicioRepository configuracionInicioRepository;
-    private final FileStorageService fileStorageService;
+    private final CloudinaryService cloudinaryService;
 
     @Transactional(readOnly = true)
     public ConfiguracionInicioDto obtener() {
@@ -58,13 +58,9 @@ public class ConfiguracionInicioService {
             if (contentType == null || !ALLOWED_IMAGE_TYPES.contains(contentType.toLowerCase())) {
                 throw new IllegalArgumentException("La portada debe ser una imagen (JPEG, PNG, GIF, WebP)");
             }
-            String oldUrl = config.getPortadaUrl();
-            String newUrl = fileStorageService.storeFile(portada, SUBFOLDER_PORTADA);
+            String newUrl = cloudinaryService.uploadImage(portada, CLOUDINARY_FOLDER_PORTADA);
             if (newUrl != null) {
                 config.setPortadaUrl(newUrl);
-                if (oldUrl != null) {
-                    fileStorageService.deleteFile(oldUrl);
-                }
             }
         }
 
@@ -73,13 +69,9 @@ public class ConfiguracionInicioService {
             if (contentType == null || !ALLOWED_IMAGE_TYPES.contains(contentType.toLowerCase())) {
                 throw new IllegalArgumentException("El logo debe ser una imagen (JPEG, PNG, GIF, WebP)");
             }
-            String oldUrl = config.getLogoUrl();
-            String newUrl = fileStorageService.storeFile(logo, SUBFOLDER_LOGO);
+            String newUrl = cloudinaryService.uploadImage(logo, CLOUDINARY_FOLDER_LOGO);
             if (newUrl != null) {
                 config.setLogoUrl(newUrl);
-                if (oldUrl != null) {
-                    fileStorageService.deleteFile(oldUrl);
-                }
             }
         }
 

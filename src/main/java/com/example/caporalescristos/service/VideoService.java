@@ -19,10 +19,10 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class VideoService {
 
-    private static final String UPLOAD_SUBFOLDER = "videos";
+    private static final String CLOUDINARY_FOLDER = "caporales/galeria/videos";
 
     private final VideoRepository videoRepository;
-    private final FileStorageService fileStorageService;
+    private final CloudinaryService cloudinaryService;
 
     @Transactional(readOnly = true)
     public List<VideoDto> listarPublicos() {
@@ -59,7 +59,10 @@ public class VideoService {
     public VideoDto crear(VideoRequest request, MultipartFile archivoVideo) {
         String urlVideo;
         if (archivoVideo != null && !archivoVideo.isEmpty()) {
-            urlVideo = fileStorageService.storeFile(archivoVideo, UPLOAD_SUBFOLDER);
+            urlVideo = cloudinaryService.uploadVideo(archivoVideo, CLOUDINARY_FOLDER);
+            if (urlVideo == null) {
+                throw new IllegalArgumentException("Error al subir el video");
+            }
         } else if (request.getUrlVideo() != null && !request.getUrlVideo().isBlank()) {
             urlVideo = request.getUrlVideo();
         } else {
@@ -83,14 +86,11 @@ public class VideoService {
         if (request.getDescripcion() != null) video.setDescripcion(request.getDescripcion());
         if (request.getActivo() != null) video.setActivo(request.getActivo());
         if (archivoVideo != null && !archivoVideo.isEmpty()) {
-            if (video.getUrlVideo() != null && video.getUrlVideo().startsWith("/uploads/")) {
-                fileStorageService.deleteFile(video.getUrlVideo());
+            String nuevaUrl = cloudinaryService.uploadVideo(archivoVideo, CLOUDINARY_FOLDER);
+            if (nuevaUrl != null) {
+                video.setUrlVideo(nuevaUrl);
             }
-            video.setUrlVideo(fileStorageService.storeFile(archivoVideo, UPLOAD_SUBFOLDER));
         } else if (request.getUrlVideo() != null && !request.getUrlVideo().isBlank()) {
-            if (video.getUrlVideo() != null && video.getUrlVideo().startsWith("/uploads/")) {
-                fileStorageService.deleteFile(video.getUrlVideo());
-            }
             video.setUrlVideo(request.getUrlVideo());
         }
         video = videoRepository.save(video);
@@ -101,9 +101,6 @@ public class VideoService {
     public void eliminar(Long id) {
         Video video = videoRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Video", id));
-        if (video.getUrlVideo() != null && video.getUrlVideo().startsWith("/uploads/")) {
-            fileStorageService.deleteFile(video.getUrlVideo());
-        }
         videoRepository.delete(video);
     }
 

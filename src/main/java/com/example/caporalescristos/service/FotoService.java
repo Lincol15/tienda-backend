@@ -19,11 +19,11 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class FotoService {
 
-    private static final String UPLOAD_SUBFOLDER = "fotos";
+    private static final String CLOUDINARY_FOLDER = "caporales/galeria/fotos";
 
     private final FotoRepository fotoRepository;
     private final GaleriaSeccionRepository galeriaSeccionRepository;
-    private final FileStorageService fileStorageService;
+    private final CloudinaryService cloudinaryService;
 
     @Transactional(readOnly = true)
     public List<FotoDto> listarPublicas() {
@@ -58,7 +58,7 @@ public class FotoService {
 
     @Transactional
     public FotoDto crear(FotoRequest request, MultipartFile imagen) {
-        String urlImagen = fileStorageService.storeFile(imagen, UPLOAD_SUBFOLDER);
+        String urlImagen = cloudinaryService.uploadImage(imagen, CLOUDINARY_FOLDER);
         if (urlImagen == null) {
             throw new IllegalArgumentException("Se requiere una imagen");
         }
@@ -88,8 +88,7 @@ public class FotoService {
             foto.setSeccion(seccion);
         }
         if (imagenNueva != null && !imagenNueva.isEmpty()) {
-            fileStorageService.deleteFile(foto.getUrlImagen());
-            foto.setUrlImagen(fileStorageService.storeFile(imagenNueva, UPLOAD_SUBFOLDER));
+            foto.setUrlImagen(cloudinaryService.uploadImage(imagenNueva, CLOUDINARY_FOLDER));
         }
         foto = fotoRepository.save(foto);
         return toDto(foto);
@@ -99,7 +98,6 @@ public class FotoService {
     public void eliminar(Long id) {
         Foto foto = fotoRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Foto", id));
-        fileStorageService.deleteFile(foto.getUrlImagen());
         fotoRepository.delete(foto);
     }
 
