@@ -32,9 +32,11 @@ build/
 ### VS Code ###
 .vscode/
 
-### No subir a GitHub ###
+### Archivos del proyecto - no subir a GitHub ###
 uploads/
 *.log
+
+### Config local (contraseñas) ###
 application-local.properties
 application-local.yml
 .env
