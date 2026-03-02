@@ -11,6 +11,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -37,10 +38,26 @@ public class AdminProductoController {
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ProductoDto> crear(
-            @RequestPart("datos") ProductoRequest request,
-            @RequestPart(value = "imagen", required = false) MultipartFile imagen
+            @RequestPart(value = "datos", required = false) ProductoRequest request,
+            @RequestPart(value = "imagen", required = false) MultipartFile imagen,
+            @RequestParam(required = false) String nombre,
+            @RequestParam(required = false) String descripcion,
+            @RequestParam(required = false) BigDecimal precio,
+            @RequestParam(required = false) Long categoriaId,
+            @RequestParam(required = false) Integer stock,
+            @RequestParam(required = false) Boolean activo
     ) {
-        ProductoDto dto = productoService.crear(request, imagen);
+        ProductoRequest body = request;
+        if (body == null) {
+            body = new ProductoRequest();
+            body.setNombre(nombre);
+            body.setDescripcion(descripcion);
+            body.setPrecio(precio);
+            body.setCategoriaId(categoriaId);
+            body.setStock(stock != null ? stock : 0);
+            body.setActivo(activo != null ? activo : true);
+        }
+        ProductoDto dto = productoService.crear(body, imagen);
         return ResponseEntity.status(HttpStatus.CREATED).body(dto);
     }
 
