@@ -47,7 +47,7 @@ public class AdminProductoController {
     @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ProductoDto> actualizar(
             @PathVariable Long id,
-            @RequestPart("datos") ProductoRequest request,
+            @RequestPart(value = "datos", required = false) ProductoRequest request,
             @RequestPart(value = "imagen", required = false) MultipartFile imagen
     ) {
         return ResponseEntity.ok(productoService.actualizar(id, request, imagen));

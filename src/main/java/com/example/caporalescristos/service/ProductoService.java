@@ -94,17 +94,22 @@ public class ProductoService {
     public ProductoDto actualizar(Long id, ProductoRequest request, MultipartFile imagenNueva) {
         Producto producto = productoRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Producto", id));
-        if (request.getNombre() != null) producto.setNombre(request.getNombre());
-        if (request.getDescripcion() != null) producto.setDescripcion(request.getDescripcion());
-        if (request.getPrecio() != null) producto.setPrecio(request.getPrecio());
-        if (request.getStock() != null) producto.setStock(request.getStock());
-        if (request.getActivo() != null) producto.setActivo(request.getActivo());
-        if (request.getCategoriaId() != null) {
-            Categoria cat = categoriaRepository.findById(request.getCategoriaId()).orElse(null);
-            producto.setCategoria(cat);
+        if (request != null) {
+            if (request.getNombre() != null) producto.setNombre(request.getNombre());
+            if (request.getDescripcion() != null) producto.setDescripcion(request.getDescripcion());
+            if (request.getPrecio() != null) producto.setPrecio(request.getPrecio());
+            if (request.getStock() != null) producto.setStock(request.getStock());
+            if (request.getActivo() != null) producto.setActivo(request.getActivo());
+            if (request.getCategoriaId() != null) {
+                Categoria cat = categoriaRepository.findById(request.getCategoriaId()).orElse(null);
+                producto.setCategoria(cat);
+            }
         }
         if (imagenNueva != null && !imagenNueva.isEmpty()) {
-            producto.setUrlImagen(cloudinaryService.uploadImage(imagenNueva, CLOUDINARY_FOLDER));
+            String nuevaUrl = cloudinaryService.uploadImage(imagenNueva, CLOUDINARY_FOLDER);
+            if (nuevaUrl != null) {
+                producto.setUrlImagen(nuevaUrl);
+            }
         }
         producto = productoRepository.save(producto);
         return toDto(producto);
